@@ -5,10 +5,15 @@ from keras.layers.convolutional import Convolution2D
 from keras.layers.pooling import AveragePooling2D, GlobalAveragePooling2D, MaxPooling2D
 from keras.layers.normalization import BatchNormalization
 import keras.backend as K
+from keras.utils.data_utils import get_file
 
 from custom_layers import Scale
 
-def DenseNet(nb_dense_block=4, growth_rate=32, nb_filter=64, reduction=0.0, dropout_rate=0.0, weight_decay=1e-4, classes=1000, weights_path=None):
+DENSENET_121_WEIGHTS_PATH = (r'https://github.com/vikaschouhan/DenseNet-Keras/releases/'
+                             r'download/v1.0/densenet121_weights_tf.h5')
+
+def DenseNet(nb_dense_block=4, growth_rate=32, nb_filter=64, reduction=0.0, dropout_rate=0.0,
+        weight_decay=1e-4, load_weights=True, include_top=False):
     '''Instantiate the DenseNet 121 architecture,
         # Arguments
             nb_dense_block: number of dense blocks to add to end
@@ -23,6 +28,7 @@ def DenseNet(nb_dense_block=4, growth_rate=32, nb_filter=64, reduction=0.0, drop
             A Keras model instance.
     '''
     eps = 1.1e-5
+    classes = 1000
 
     # compute compression factor
     compression = 1.0 - reduction
@@ -65,15 +71,19 @@ def DenseNet(nb_dense_block=4, growth_rate=32, nb_filter=64, reduction=0.0, drop
     x = Scale(axis=concat_axis, name='conv'+str(final_stage)+'_blk_scale')(x)
     x = Activation('relu', name='relu'+str(final_stage)+'_blk')(x)
     x = GlobalAveragePooling2D(name='pool'+str(final_stage))(x)
+    fc_ll = x
 
     x = Dense(classes, name='fc6')(x)
     x = Activation('softmax', name='prob')(x)
 
     model = Model(img_input, x, name='densenet')
-
-    if weights_path is not None:
-      model.load_weights(weights_path)
-
+    if load_weights:
+        weights_path = get_file('densenet121_weights_tf.h5', DENSENET_121_WEIGHTS_PATH, cache_subdir='models')
+        model.load_weights(weights_path)
+ 
+    if include_top == False:
+        model = Model(img_input, fc_ll)
+        
     return model
 
 
@@ -162,7 +172,7 @@ def dense_block(x, stage, nb_layers, nb_filter, growth_rate, dropout_rate=None, 
     for i in range(nb_layers):
         branch = i+1
         x = conv_block(concat_feat, stage, branch, growth_rate, dropout_rate, weight_decay)
-        concat_feat = merge([concat_feat, x], mode='concat', concat_axis=concat_axis, name='concat_'+str(stage)+'_'+str(branch))
+        concat_feat = merge.concatenate([concat_feat, x], axis=concat_axis, name='concat_'+str(stage)+'_'+str(branch))
 
         if grow_nb_filters:
             nb_filter += growth_rate
