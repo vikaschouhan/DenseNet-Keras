@@ -1,9 +1,6 @@
-from keras.engine import Layer, InputSpec
-try:
-    from keras import initializations
-except ImportError:
-    from keras import initializers as initializations
-import keras.backend as K
+from   tensorflow.keras.layers import Layer, InputSpec
+from   tensorflow.keras import initializers as initializations
+import tensorflow.keras.backend as K
 
 class Scale(Layer):
     '''Custom Layer for DenseNet used for BatchNormalization.
@@ -42,6 +39,7 @@ class Scale(Layer):
         self.gamma_init = initializations.get(gamma_init)
         self.initial_weights = weights
         super(Scale, self).__init__(**kwargs)
+    # enddef
 
     def build(self, input_shape):
         self.input_spec = [InputSpec(shape=input_shape)]
@@ -52,11 +50,13 @@ class Scale(Layer):
         self.beta = K.variable(self.beta_init(shape), name='{}_beta'.format(self.name))
         #self.gamma = self.gamma_init(shape, name='{}_gamma'.format(self.name))
         #self.beta = self.beta_init(shape, name='{}_beta'.format(self.name))
-        self.trainable_weights = [self.gamma, self.beta]
+        self._trainable_weights = [self.gamma, self.beta]
 
         if self.initial_weights is not None:
             self.set_weights(self.initial_weights)
             del self.initial_weights
+        # endif
+    # enddef
 
     def call(self, x, mask=None):
         input_shape = self.input_spec[0].shape
@@ -65,9 +65,11 @@ class Scale(Layer):
 
         out = K.reshape(self.gamma, broadcast_shape) * x + K.reshape(self.beta, broadcast_shape)
         return out
+    # enddef
 
     def get_config(self):
         config = {"momentum": self.momentum, "axis": self.axis}
         base_config = super(Scale, self).get_config()
         return dict(list(base_config.items()) + list(config.items()))
-
+    # enddef
+# endclass
