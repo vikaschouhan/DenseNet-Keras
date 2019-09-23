@@ -78,10 +78,8 @@ def __DenseNet121(nb_dense_block=4, growth_rate=32, nb_filter=64, reduction=0.5,
     global concat_axis
     if K.image_data_format() == 'channels_last':
         concat_axis = 3
-        img_input = Input(shape=(224, 224, 3), name='data')
     else:
         concat_axis = 1
-        img_input = Input(shape=(3, 224, 224), name='data')
     # endif
 
     # From architecture for ImageNet (Table 1 in the paper)
@@ -131,11 +129,14 @@ def __DenseNet121(nb_dense_block=4, growth_rate=32, nb_filter=64, reduction=0.5,
     if load_weights:
         weights_path = get_file('densenet121_weights_tf.h5', DENSENET_121_WEIGHTS_PATH, cache_subdir='models')
         model.load_weights(weights_path)
+    # endif
  
     if include_top == False:
         model = Model(img_input, fc_ll)
+    # endif
         
     return model
+# enddef
 
 
 def conv_block(x, stage, branch, nb_filter, dropout_rate=None, weight_decay=1e-4):

@@ -78,10 +78,8 @@ def __DenseNet161(nb_dense_block=4, growth_rate=48, nb_filter=96, reduction=0.5,
     global concat_axis
     if K.image_data_format() == 'channels_last':
         concat_axis = 3
-        img_input = Input(shape=(224, 224, 3), name='data')
     else:
         concat_axis = 1
-        img_input = Input(shape=(3, 224, 224), name='data')
     # endif
 
     # From architecture for ImageNet (Table 1 in the paper)
